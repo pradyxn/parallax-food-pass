@@ -29,3 +29,41 @@
 .sync-status-panel,.sync-settings-panel{padding:19px 21px;margin-top:15px}.sync-status-panel>.panel-heading>svg{color:#b79cf0}.sync-status-counts{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-top:18px}.sync-status-counts>div{display:grid;gap:6px;padding:12px;border:1px solid #302b3d;border-radius:9px;background:#1b1826}.sync-status-counts span{color:#9f96ab;font:8px var(--mono);letter-spacing:.08em}.sync-status-counts strong{font:700 19px var(--display)}.sync-setting-option{display:flex;align-items:center;gap:10px;margin-top:15px;color:#c5bdcf;font-size:11px}.sync-setting-option input{accent-color:#9c7bea}.sync-setting-note{margin:8px 0 0;color:#e9c987;font-size:10px}.sync-settings-footer{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:18px;padding-top:14px;border-top:1px solid #2b2637;color:#9b93a7;font-size:10px}
 @media(max-width:900px){.sync-status-counts{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:650px){.sync-status-panel,.sync-settings-panel{padding:16px}.sync-settings-footer{align-items:flex-start;flex-direction:column}.sync-status-counts span{font-size:7px}}
+
+/* Mobile-first Parallax QR scanner */
+@media (max-width: 650px) {
+  .scanner-frame {
+    aspect-ratio: 1 / 1;
+    min-height: 320px;
+    max-height: 58svh;
+  }
+  .scanner-video {
+    min-height: 100%;
+    object-fit: cover;
+  }
+  .scanner-actions {
+    align-items: stretch;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .scanner-action-buttons {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    width: 100%;
+    gap: 8px;
+  }
+  .scanner-action-buttons .button,
+  .scanner-action-buttons select {
+    min-height: 46px;
+    width: 100%;
+    justify-content: center;
+    font-size: 11px;
+  }
+  .scan-target {
+    width: min(68vw, 230px);
+    height: min(68vw, 230px);
+  }
+  .manual-form .button {
+    min-height: 44px;
+  }
+}
