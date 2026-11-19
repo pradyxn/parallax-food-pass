@@ -1,0 +1,200 @@
+import { NextRequest, NextResponse } from "next/server";
+import { randomUUID } from "node:crypto";
+import { requireAdmin } from "@/lib/admin-auth";
+import { getSafeDatabaseErrorMessage } from "@/lib/database-errors";
+import { getSupabaseAdmin } from "@/lib/supabase";
+import { cleanText, isRecord } from "@/lib/validation";
+
+export const runtime = "nodejs";
+
+type ScanMode = "ENTRY" | "MEAL_PREVIEW" | "MEAL_CONFIRM" | "MEAL_CANCEL";
+const RESERVATION_MILLISECONDS = 5 * 60 * 1000;
+const attendeeFields = "id, pass_token, name, roll_number, branch, preference, checked_in_at, meal_collected_at";
+const attendeeFieldsWithReservation = `${attendeeFields}, meal_reserved_at, meal_reservation_token`;
+
+function displayAttendee(attendee: {
+  id: string;
+  pass_token: string;
+  name: string;
+  roll_number: string | null;
+  branch: string | null;
+  preference: string;
+  checked_in_at: string | null;
+  meal_collected_at: string | null;
+}) {
+  return {
+    id: attendee.id,
+    pass_token: attendee.pass_token,
+    name: attendee.name,
+    roll_number: attendee.roll_number,
+    branch: attendee.branch,
+    preference: attendee.preference,
+    checked_in_at: attendee.checked_in_at,
+    meal_collected_at: attendee.meal_collected_at,
+  };
+}
+
+function getToken(raw: unknown) {
+  const text = cleanText(raw, 500);
+  if (!text) return "";
+  try {
+    const url = new URL(text);
+    const parts = url.pathname.split("/").filter(Boolean);
+    return parts.at(-1) ?? "";
+  } catch {
+    return text;
+  }
+}
+
+function isUuid(value: string) {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
+}
+
+export async function POST(request: NextRequest) {
+  const denied = requireAdmin(request);
+  if (denied) return denied;
+  try {
+    let body: unknown;
+    try {
+      body = await request.json();
+    } catch {
+      return NextResponse.json({ error: "Provide valid JSON for the scan request." }, { status: 400 });
+    }
+    if (!isRecord(body)) {
+      return NextResponse.json({ error: "Provide a scan mode and pass code." }, { status: 400 });
+    }
+    const mode = String(body.mode ?? "").toUpperCase() as ScanMode;
+    const token = getToken(body.code);
+    if (!token || !["ENTRY", "MEAL_PREVIEW", "MEAL_CONFIRM", "MEAL_CANCEL"].includes(mode)) {
+      return NextResponse.json({ error: "Choose a scan mode and scan a valid Parallax pass." }, { status: 400 });
+    }
+    if (!isUuid(token)) {
+      return NextResponse.json({ status: "INVALID", error: "This QR code is not a valid Parallax pass." }, { status: 404 });
+    }
+    const reservationToken = cleanText(body.reservationToken, 36);
+    if ((mode === "MEAL_CONFIRM" || mode === "MEAL_CANCEL") && !isUuid(reservationToken)) {
+      return NextResponse.json({ error: "Scan the pass again before confirming or cancelling meal service." }, { status: 400 });
+    }
+
+    const db = getSupabaseAdmin();
+    const { data: attendee, error } = await db.from("attendees")
+      .select(attendeeFieldsWithReservation)
+      .eq("pass_token", token)
+      .maybeSingle();
+    if (error) throw error;
+    if (!attendee) return NextResponse.json({ status: "INVALID", error: "This QR code is not registered for Parallax." }, { status: 404 });
+
+    if (mode === "ENTRY") {
+      if (attendee.checked_in_at) {
+        return NextResponse.json({ status: "DUPLICATE_ENTRY", message: "Already checked in.", attendee: displayAttendee(attendee) });
+      }
+      const { data: updated, error: updateError } = await db.from("attendees")
+        .update({ checked_in_at: new Date().toISOString() })
+        .eq("id", attendee.id).is("checked_in_at", null)
+        .select(attendeeFields).maybeSingle();
+      if (updateError) throw updateError;
+      if (!updated) {
+        return NextResponse.json({ status: "DUPLICATE_ENTRY", message: "This pass was just checked in on another device.", attendee: displayAttendee(attendee) });
+      }
+      return NextResponse.json({ status: "ENTRY_OK", message: "Entry confirmed. Attendee is present.", attendee: displayAttendee(updated) });
+    }
+
+    if (!attendee.checked_in_at) {
+      return NextResponse.json({ status: "NOT_CHECKED_IN", message: "Entry has not been recorded. Send this attendee to the entry desk first.", attendee: displayAttendee(attendee) });
+    }
+    if (attendee.meal_collected_at) {
+      return NextResponse.json({ status: "DUPLICATE_MEAL", message: "Meal already collected. Do not issue another meal.", attendee: displayAttendee(attendee) });
+    }
+    if (mode === "MEAL_PREVIEW") {
+      const now = new Date();
+      const reservationExpiresAt = new Date(now.getTime() - RESERVATION_MILLISECONDS).toISOString();
+      if (attendee.meal_reservation_token && attendee.meal_reserved_at
+        && new Date(attendee.meal_reserved_at).getTime() > now.getTime() - RESERVATION_MILLISECONDS) {
+        return NextResponse.json({
+          status: "MEAL_RESERVED",
+          message: "Another food counter is handling this pass. Do not hand over a meal.",
+          attendee: displayAttendee(attendee),
+        }, { status: 409 });
+      }
+
+      const reservationToken = randomUUID();
+      const { data: reserved, error: reserveError } = await db.from("attendees")
+        .update({ meal_reserved_at: now.toISOString(), meal_reservation_token: reservationToken })
+        .eq("id", attendee.id)
+        .not("checked_in_at", "is", null)
+        .is("meal_collected_at", null)
+        .or(`meal_reserved_at.is.null,meal_reserved_at.lte.${reservationExpiresAt}`)
+        .select(attendeeFields).maybeSingle();
+      if (reserveError) throw reserveError;
+      if (!reserved) {
+        const { data: latest, error: latestError } = await db.from("attendees")
+          .select(attendeeFieldsWithReservation).eq("id", attendee.id).maybeSingle();
+        if (latestError) throw latestError;
+        if (latest?.meal_collected_at) {
+          return NextResponse.json({ status: "DUPLICATE_MEAL", message: "Meal already collected. Do not issue another meal.", attendee: displayAttendee(latest) });
+        }
+        return NextResponse.json({
+          status: "MEAL_RESERVED",
+          message: "Another food counter is handling this pass. Do not hand over a meal.",
+          attendee: displayAttendee(latest ?? attendee),
+        }, { status: 409 });
+      }
+      return NextResponse.json({
+        status: "MEAL_READY",
+        message: `Verified. ${reserved.preference === "VEG" ? "VEG" : "NON-VEG"} meal due. Hand it over, then confirm below.`,
+        attendee: displayAttendee(reserved),
+        reservationToken,
+      });
+    }
+
+    const reservationExpiresAt = new Date(Date.now() - RESERVATION_MILLISECONDS).toISOString();
+    if (mode === "MEAL_CANCEL") {
+      const { data: cancelled, error: cancelError } = await db.from("attendees")
+        .update({ meal_reserved_at: null, meal_reservation_token: null })
+        .eq("id", attendee.id).eq("meal_reservation_token", reservationToken)
+        .is("meal_collected_at", null)
+        .select(attendeeFields).maybeSingle();
+      if (cancelError) throw cancelError;
+      if (!cancelled) {
+        return NextResponse.json({ status: "MEAL_RESERVATION_EXPIRED", error: "This meal reservation is no longer active. Scan the pass again." }, { status: 409 });
+      }
+      return NextResponse.json({ status: "MEAL_CANCELLED", message: "Meal reservation released. You may scan another pass.", attendee: displayAttendee(cancelled) });
+    }
+
+    if (attendee.meal_reservation_token !== reservationToken || !attendee.meal_reserved_at
+      || new Date(attendee.meal_reserved_at).getTime() <= Date.now() - RESERVATION_MILLISECONDS) {
+      return NextResponse.json({
+        status: "MEAL_RESERVATION_EXPIRED",
+        error: "This meal reservation is no longer active. Scan the pass again before handing over a meal.",
+        attendee: displayAttendee(attendee),
+      }, { status: 409 });
+    }
+
+    const { data: updated, error: updateError } = await db.from("attendees")
+      .update({ meal_collected_at: new Date().toISOString(), meal_reserved_at: null, meal_reservation_token: null })
+      .eq("id", attendee.id)
+      .eq("meal_reservation_token", reservationToken)
+      .gt("meal_reserved_at", reservationExpiresAt)
+      .not("checked_in_at", "is", null)
+      .is("meal_collected_at", null)
+      .select(attendeeFields).maybeSingle();
+    if (updateError) throw updateError;
+    if (!updated) {
+      const { data: latest, error: latestError } = await db.from("attendees").select(attendeeFieldsWithReservation).eq("id", attendee.id).maybeSingle();
+      if (latestError) throw latestError;
+      if (latest?.meal_collected_at) {
+        return NextResponse.json({ status: "DUPLICATE_MEAL", message: "This meal was just issued on another device.", attendee: displayAttendee(latest) });
+      }
+      if (latest?.meal_reservation_token && latest.meal_reservation_token !== reservationToken) {
+        return NextResponse.json({ status: "MEAL_RESERVED", message: "Another food counter is handling this pass. Do not hand over a meal.", attendee: displayAttendee(latest) }, { status: 409 });
+      }
+      return NextResponse.json({ status: "MEAL_RESERVATION_EXPIRED", error: "This meal reservation is no longer active. Scan the pass again.", attendee: displayAttendee(latest ?? attendee) }, { status: 409 });
+    }
+    return NextResponse.json({ status: "MEAL_OK", message: `${updated.preference === "VEG" ? "VEG" : "NON-VEG"} meal issued.`, attendee: displayAttendee(updated) });
+  } catch (error) {
+    return NextResponse.json(
+      { error: getSafeDatabaseErrorMessage(error, "Could not process this scan.") },
+      { status: 500 },
+    );
+  }
+}
