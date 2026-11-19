@@ -16,7 +16,6 @@ type CameraSession = {
   controls: IScannerControls | null;
   stream: MediaStream | null;
   cancelled: boolean;
-  failed: boolean;
 };
 
 type ScanCallback = Parameters<BrowserCodeReader["scan"]>[1];
@@ -35,9 +34,18 @@ class ResilientBrowserQRCodeReader extends BrowserQRCodeReader {
     callbackFn: ScanCallback,
     finalizeCallback?: ScanFinalizeCallback,
   ): IScannerControls {
+    const createContext = (canvas: HTMLCanvasElement) => {
+      let context: CanvasRenderingContext2D | null = null;
+      try {
+        context = canvas.getContext("2d", { willReadFrequently: true });
+      } catch {
+        // Older mobile browsers may not support context options.
+      }
+      return context ?? canvas.getContext("2d");
+    };
+
     let captureCanvas = BrowserCodeReader.createCaptureCanvas(element);
-    let captureContext = captureCanvas.getContext("2d", { willReadFrequently: true });
-    if (!captureContext) captureContext = captureCanvas.getContext("2d");
+    let captureContext = createContext(captureCanvas);
     if (!captureContext) throw new Error("Could not create a 2D camera frame context.");
 
     let stopped = false;
@@ -62,8 +70,7 @@ class ResilientBrowserQRCodeReader extends BrowserQRCodeReader {
 
     const resetCaptureCanvas = () => {
       const nextCanvas = BrowserCodeReader.createCaptureCanvas(element);
-      let nextContext = nextCanvas.getContext("2d", { willReadFrequently: true });
-      if (!nextContext) nextContext = nextCanvas.getContext("2d");
+      const nextContext = createContext(nextCanvas);
       if (!nextContext) throw new Error("Could not recreate the camera frame context.");
       captureCanvas = nextCanvas;
       captureContext = nextContext;
@@ -82,13 +89,12 @@ class ResilientBrowserQRCodeReader extends BrowserQRCodeReader {
         return;
       }
 
+      let result: ReturnType<BrowserCodeReader["decode"]>;
       try {
         if (!captureContext) throw new Error("The camera frame context is unavailable.");
         BrowserCodeReader.drawImageOnCanvas(captureContext, element);
-        const result = this.decodeFromCanvas(captureCanvas);
+        result = this.decodeFromCanvas(captureCanvas);
         unexpectedFrameErrors = 0;
-        callbackFn(result, undefined, controls);
-        schedule(220);
       } catch (caught) {
         const error = caught instanceof Error ? caught : new Error(String(caught));
         callbackFn(undefined, error as Parameters<ScanCallback>[1], controls);
@@ -114,7 +120,11 @@ class ResilientBrowserQRCodeReader extends BrowserQRCodeReader {
 
         // Crucially, a frame/decode exception does not stop a healthy camera stream.
         schedule(normalDecodeMiss ? 250 : 500);
+        return;
       }
+
+      callbackFn(result, undefined, controls);
+      schedule(220);
     };
 
     scanFrame();
@@ -238,7 +248,6 @@ export default function QRScanner({ active, onScan }: Props) {
       controls: null,
       stream: null,
       cancelled: false,
-      failed: false,
     };
 
     sessionRef.current = session;
@@ -355,7 +364,6 @@ export default function QRScanner({ active, onScan }: Props) {
 
         if (
           session.cancelled
-          || session.failed
           || sessionRef.current !== session
           || generationRef.current !== generation
         ) {
