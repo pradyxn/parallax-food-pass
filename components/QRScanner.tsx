@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { FormEvent } from "react";
 import { BrowserCodeReader, BrowserQRCodeReader } from "@zxing/browser";
-import type { IScannerControls } from "@zxing/browser";
+import type { HTMLVisualMediaElement, IScannerControls } from "@zxing/browser";
 import { Camera, CameraOff, CheckCircle2, Keyboard } from "lucide-react";
 
 type Props = {
@@ -19,11 +19,108 @@ type CameraSession = {
   failed: boolean;
 };
 
-const TRANSIENT_DECODE_ERRORS = new Set([
-  "NotFoundException",
-  "ChecksumException",
-  "FormatException",
-]);
+type ScanCallback = Parameters<BrowserCodeReader["scan"]>[1];
+type ScanFinalizeCallback = Parameters<BrowserCodeReader["scan"]>[2];
+
+/**
+ * ZXing 0.1.5 stops its scan loop on any frame/decode exception other than
+ * NotFound, Checksum, and Format. On mobile browsers, transient video/canvas
+ * errors can also occur while the camera stream is healthy. Keep the stream
+ * alive and retry those frames; the MediaStream track's "ended" event remains
+ * the authority for an actual camera disconnect.
+ */
+class ResilientBrowserQRCodeReader extends BrowserQRCodeReader {
+  override scan(
+    element: HTMLVisualMediaElement,
+    callbackFn: ScanCallback,
+    finalizeCallback?: ScanFinalizeCallback,
+  ): IScannerControls {
+    let captureCanvas = BrowserCodeReader.createCaptureCanvas(element);
+    let captureContext = captureCanvas.getContext("2d", { willReadFrequently: true });
+    if (!captureContext) captureContext = captureCanvas.getContext("2d");
+    if (!captureContext) throw new Error("Could not create a 2D camera frame context.");
+
+    let stopped = false;
+    let timeoutId: ReturnType<typeof setTimeout> | undefined;
+    let unexpectedFrameErrors = 0;
+
+    const stop = () => {
+      if (stopped) return;
+      stopped = true;
+      if (timeoutId !== undefined) clearTimeout(timeoutId);
+      captureContext = null;
+      captureCanvas.width = 0;
+      captureCanvas.height = 0;
+      finalizeCallback?.();
+    };
+
+    const controls: IScannerControls = { stop };
+
+    const schedule = (delay: number) => {
+      if (!stopped) timeoutId = setTimeout(scanFrame, delay);
+    };
+
+    const resetCaptureCanvas = () => {
+      const nextCanvas = BrowserCodeReader.createCaptureCanvas(element);
+      let nextContext = nextCanvas.getContext("2d", { willReadFrequently: true });
+      if (!nextContext) nextContext = nextCanvas.getContext("2d");
+      if (!nextContext) throw new Error("Could not recreate the camera frame context.");
+      captureCanvas = nextCanvas;
+      captureContext = nextContext;
+      unexpectedFrameErrors = 0;
+    };
+
+    const scanFrame = () => {
+      if (stopped) return;
+
+      // Do not ask canvas to draw an empty or not-yet-decoded mobile video frame.
+      if (
+        element instanceof HTMLVideoElement
+        && (element.readyState < 2 || element.videoWidth === 0 || element.videoHeight === 0)
+      ) {
+        schedule(250);
+        return;
+      }
+
+      try {
+        if (!captureContext) throw new Error("The camera frame context is unavailable.");
+        BrowserCodeReader.drawImageOnCanvas(captureContext, element);
+        const result = this.decodeFromCanvas(captureCanvas);
+        unexpectedFrameErrors = 0;
+        callbackFn(result, undefined, controls);
+        schedule(220);
+      } catch (caught) {
+        const error = caught instanceof Error ? caught : new Error(String(caught));
+        callbackFn(undefined, error as Parameters<ScanCallback>[1], controls);
+
+        const kind = (caught as { getKind?: () => string } | null)?.getKind?.()
+          ?? (caught as { name?: string } | null)?.name
+          ?? error.name;
+        const normalDecodeMiss = ["NotFoundException", "ChecksumException", "FormatException"].includes(kind);
+
+        if (normalDecodeMiss) {
+          unexpectedFrameErrors = 0;
+        } else {
+          unexpectedFrameErrors += 1;
+          // Recreate the temporary canvas/context after repeated browser frame errors.
+          if (unexpectedFrameErrors >= 5) {
+            try {
+              resetCaptureCanvas();
+            } catch (resetError) {
+              console.warn("[Parallax scanner] Camera frame context reset failed; retrying.", resetError);
+            }
+          }
+        }
+
+        // Crucially, a frame/decode exception does not stop a healthy camera stream.
+        schedule(normalDecodeMiss ? 250 : 500);
+      }
+    };
+
+    scanFrame();
+    return controls;
+  }
+}
 
 function stopCameraSession(session: CameraSession) {
   const stream = session.stream
@@ -98,6 +195,7 @@ export default function QRScanner({ active, onScan }: Props) {
   const mountedRef = useRef(false);
   const lockedRef = useRef(false);
   const lastScannedRef = useRef<{ value: string; lastSeenAt: number } | null>(null);
+  const lastDecoderErrorRef = useRef("");
   const onScanRef = useRef(onScan);
 
   const [cameraError, setCameraError] = useState("");
@@ -155,19 +253,22 @@ export default function QRScanner({ active, onScan }: Props) {
     lockedRef.current = false;
     lastScannedRef.current = null;
 
-    const handleDecode = (result: { getText(): string } | undefined, error?: { name: string; message?: string }) => {
+    const handleDecode = (result: { getText(): string } | undefined, error?: { name: string; message?: string; getKind?: () => string }) => {
       if (sessionRef.current !== session || session.cancelled || generationRef.current !== generation) return;
 
-      if (error && !TRANSIENT_DECODE_ERRORS.has(error.name)) {
-        session.failed = true;
-        stopCameraSession(session);
-        if (sessionRef.current === session) sessionRef.current = null;
-        setCameraReady(false);
-        setCameraStarting(false);
-        setCameraError("QR scanning stopped: " + (error.message || "the camera decoder encountered an unexpected error."));
+      if (error) {
+        const kind = error.getKind?.() || error.name || "UnknownDecodeError";
+        if (!["NotFoundException", "ChecksumException", "FormatException"].includes(kind)) {
+          const signature = kind + ":" + (error.message || "");
+          if (lastDecoderErrorRef.current !== signature) {
+            console.warn("[Parallax scanner] Frame decoding failed; camera remains active and will retry.", error);
+            lastDecoderErrorRef.current = signature;
+          }
+        }
         return;
       }
 
+      if (result) lastDecoderErrorRef.current = "";
       if (!result) {
         const last = lastScannedRef.current;
         if (last && Date.now() - last.lastSeenAt > 1200) lastScannedRef.current = null;
@@ -207,7 +308,7 @@ export default function QRScanner({ active, onScan }: Props) {
         video.setAttribute("playsinline", "true");
         video.setAttribute("webkit-playsinline", "true");
 
-        const reader = new BrowserQRCodeReader(undefined, {
+        const reader = new ResilientBrowserQRCodeReader(undefined, {
           delayBetweenScanAttempts: 220,
           delayBetweenScanSuccess: 450,
           tryPlayVideoTimeout: 12000,
