@@ -11,7 +11,7 @@
     "test:sync": "node --experimental-strip-types --test tests/google-sync.test.mjs"
   },
   "dependencies": {
-    "@supabase/supabase-js": "^2.57.4",
+    "@supabase/supabase-js": "^2.119.2",
     "@zxing/browser": "^0.1.5",
     "lucide-react": "^0.468.0",
     "next": "^15.5.6",
