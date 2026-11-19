@@ -10,7 +10,7 @@ export const runtime = "nodejs";
 type ScanMode = "ENTRY" | "MEAL_PREVIEW" | "MEAL_CONFIRM" | "MEAL_CANCEL";
 const RESERVATION_MILLISECONDS = 5 * 60 * 1000;
 const attendeeFields = "id, pass_token, name, roll_number, branch, preference, checked_in_at, meal_collected_at";
-const attendeeFieldsWithReservation = \`\${attendeeFields}, meal_reserved_at, meal_reservation_token\`;
+const attendeeFieldsWithReservation = `${attendeeFields}, meal_reserved_at, meal_reservation_token`;
 
 function displayAttendee(attendee: {
   id: string;
@@ -142,7 +142,7 @@ export async function POST(request: NextRequest) {
         .eq("id", attendee.id)
         .not("checked_in_at", "is", null)
         .is("meal_collected_at", null)
-        .or(\`meal_reserved_at.is.null,meal_reserved_at.lte.\${reservationExpiresAt}\`)
+        .or(`meal_reserved_at.is.null,meal_reserved_at.lte.${reservationExpiresAt}`)
         .select(attendeeFields).maybeSingle();
       if (reserveError) throw reserveError;
       if (!reserved) {
@@ -160,7 +160,7 @@ export async function POST(request: NextRequest) {
       }
       return NextResponse.json({
         status: "MEAL_READY",
-        message: \`Verified. \${reserved.preference === "VEG" ? "VEG" : "NON-VEG"} meal due. Hand it over, then confirm within five minutes.\`,
+        message: `Verified. ${reserved.preference === "VEG" ? "VEG" : "NON-VEG"} meal due. Hand it over, then confirm within five minutes.`,
         attendee: displayAttendee(reserved),
         reservationToken,
       });
@@ -209,7 +209,7 @@ export async function POST(request: NextRequest) {
       }
       return NextResponse.json({ status: "MEAL_RESERVATION_EXPIRED", error: "This meal reservation is no longer active. Scan the pass again.", attendee: displayAttendee(latest ?? attendee) }, { status: 409 });
     }
-    return NextResponse.json({ status: "MEAL_OK", message: \`\${updated.preference === "VEG" ? "VEG" : "NON-VEG"} meal issued.\`, attendee: displayAttendee(updated) });
+    return NextResponse.json({ status: "MEAL_OK", message: `${updated.preference === "VEG" ? "VEG" : "NON-VEG"} meal issued.`, attendee: displayAttendee(updated) });
   } catch (error) {
     return NextResponse.json(
       { error: getSafeDatabaseErrorMessage(error, "Could not process this scan.") },
