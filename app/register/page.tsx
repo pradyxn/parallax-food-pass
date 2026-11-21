@@ -9,7 +9,7 @@ type RegistrationForm = {
   roll_number: string;
   branch: string;
   section: string;
-  preference: "VEG" | "NON_VEG";
+  preference: "VEG" | "NON_VEG" | "";
 };
 
 const emptyForm: RegistrationForm = {
@@ -17,7 +17,7 @@ const emptyForm: RegistrationForm = {
   roll_number: "",
   branch: "",
   section: "",
-  preference: "VEG",
+  preference: "",
 };
 
 export default function RegisterPage() {
@@ -67,10 +67,10 @@ export default function RegisterPage() {
         <label>Full name<input value={form.name} onChange={(e) => update("name", e.target.value)} placeholder="Enter your full name" autoComplete="name" required minLength={2} maxLength={100} /></label>
         <label>College roll number<input value={form.roll_number} onChange={(e) => update("roll_number", e.target.value.toUpperCase())} placeholder="Enter your hall-ticket / roll number" autoCapitalize="characters" autoComplete="off" required maxLength={60} /></label>
         <div className="form-grid">
-          <label>Branch<input value={form.branch} onChange={(e) => update("branch", e.target.value)} placeholder="e.g. CSM" required maxLength={50} /></label>
-          <label>Section<input value={form.section} onChange={(e) => update("section", e.target.value.toUpperCase())} placeholder="e.g. A" required maxLength={40} /></label>
+          <label>Branch<input value={form.branch} onChange={(e) => update("branch", e.target.value)} placeholder="e.g. CSM" maxLength={50} /></label>
+          <label>Section<input value={form.section} onChange={(e) => update("section", e.target.value.toUpperCase())} placeholder="e.g. A" maxLength={40} /></label>
         </div>
-        <label>Food preference<select value={form.preference} onChange={(e) => update("preference", e.target.value as RegistrationForm["preference"])}><option value="VEG">VEG</option><option value="NON_VEG">NON-VEG</option></select></label>
+        <label>Food preference<select value={form.preference} onChange={(e) => update("preference", e.target.value as RegistrationForm["preference"])}><option value="">Choose meal preference</option><option value="VEG">VEG</option><option value="NON_VEG">NON-VEG</option></select></label>
         {error && <div className="error-inline"><CircleAlert size={16} />{error}</div>}
         <button className="button button-primary button-full public-submit" type="submit" disabled={busy}>{busy ? "Creating your pass…" : "Create / retrieve my QR pass"}<ArrowUpRight size={17} /></button>
         <div className="secure-note"><CheckCircle2 size={14} /> Your roll number can be registered only once.</div>
