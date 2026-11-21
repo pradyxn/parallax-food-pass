@@ -5,7 +5,7 @@ export function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
-export type AttendeeCsvField = "name" | "roll_number" | "branch" | "preference" | "email";
+export type AttendeeCsvField = "name" | "roll_number" | "branch" | "section" | "preference" | "email";
 
 export function normalizeCsvHeader(value: string) {
   return value
