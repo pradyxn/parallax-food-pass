@@ -16,11 +16,11 @@ export async function GET(request: NextRequest) {
   if (denied) return denied;
   try {
     const { data, error } = await getSupabaseAdmin().from("attendees")
-      .select("name, roll_number, branch, preference, source, pass_token, created_at, checked_in_at, meal_collected_at")
+      .select("name, roll_number, email, branch, preference, source, pass_token, created_at, checked_in_at, meal_collected_at")
       .order("created_at", { ascending: true }).limit(10000);
     if (error) throw error;
-    const header = ["name", "roll_number", "branch", "food_preference", "source", "pass_url", "registered_at", "checked_in_at", "meal_collected_at"];
-    const lines = [header, ...(data ?? []).map((r) => [r.name, r.roll_number, r.branch, r.preference, r.source, `${request.nextUrl.origin}/pass/${r.pass_token}`, r.created_at, r.checked_in_at, r.meal_collected_at])]
+    const header = ["name", "roll_number", "email", "branch", "food_preference", "source", "pass_url", "registered_at", "checked_in_at", "meal_collected_at"];
+    const lines = [header, ...(data ?? []).map((r) => [r.name, r.roll_number, r.email, r.branch, r.preference, r.source, `${process.env.APP_BASE_URL || request.nextUrl.origin}/pass/${r.pass_token}`, r.created_at, r.checked_in_at, r.meal_collected_at])]
       .map((row) => row.map(csvCell).join(","));
     return new NextResponse(lines.join("\r\n"), {
       headers: {

@@ -5,7 +5,7 @@ export function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
-export type AttendeeCsvField = "name" | "roll_number" | "branch" | "preference";
+export type AttendeeCsvField = "name" | "roll_number" | "branch" | "preference" | "email";
 
 export function normalizeCsvHeader(value: string) {
   return value
@@ -30,6 +30,7 @@ export function identifyAttendeeCsvField(header: string): AttendeeCsvField | nul
   ) {
     return "roll_number";
   }
+  if (normalized === "email" || normalized === "email_address" || normalized === "email_id" || /(^|_)email(_|$)/.test(normalized)) return "email";
   if (/(^|_)(branch|department|dept|course|section)(_|$)/.test(normalized)) {
     return "branch";
   }

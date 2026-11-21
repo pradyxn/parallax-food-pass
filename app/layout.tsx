@@ -3,9 +3,9 @@ import type { ReactNode } from "react";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Parallax Food Pass",
-  description: "Parallax 2026 attendee check-in and meal distribution system.",
-  applicationName: "Parallax Food Pass",
+  title: "ParallaxPass",
+  description: "Official Parallax Freshers 2026 attendee QR passes, check-in and meal collection.",
+  applicationName: "ParallaxPass",
 };
 
 export const viewport: Viewport = {

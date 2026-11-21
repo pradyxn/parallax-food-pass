@@ -13,10 +13,10 @@ export async function GET(request: NextRequest) {
   try {
     const q = cleanText(request.nextUrl.searchParams.get("q"), 80);
     const db = getSupabaseAdmin();
-    let query = db.from("attendees").select("id, pass_token, name, roll_number, branch, preference, source, checked_in_at, meal_collected_at, created_at").order("created_at", { ascending: false }).limit(1000);
+    let query = db.from("attendees").select("id, pass_token, name, roll_number, email, branch, preference, source, checked_in_at, meal_collected_at, created_at").order("created_at", { ascending: false }).limit(1000);
     if (q) {
       const safeQ = q.replace(/[^a-zA-Z0-9@.\-\s]/g, " ").trim();
-      if (safeQ) query = query.or(`name.ilike.%${safeQ}%,roll_number.ilike.%${safeQ}%`);
+      if (safeQ) query = query.or(`name.ilike.%${safeQ}%,roll_number.ilike.%${safeQ}%,email.ilike.%${safeQ}%`);
     }
     const { data, error } = await query;
     if (error) throw error;

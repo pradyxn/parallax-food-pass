@@ -1,6 +1,7 @@
 import "server-only";
 
 import type { SupabaseClient } from "@supabase/supabase-js";
+import QRCode from "qrcode";
 import { isRecord } from "./validation";
 
 type DeliveryOptions = {
@@ -121,6 +122,8 @@ export async function deliverPassEmails(db: SupabaseClient, options: DeliveryOpt
       const name = escapeHtml(attendee.name);
       const safeUrl = escapeHtml(passUrl);
       try {
+        const qrPng = await QRCode.toBuffer(passUrl, { type: "png", width: 380, margin: 2, errorCorrectionLevel: "H" });
+        const qrBase64 = qrPng.toString("base64");
         const response = await fetch("https://api.resend.com/emails", {
           method: "POST",
           headers: {
@@ -131,7 +134,9 @@ export async function deliverPassEmails(db: SupabaseClient, options: DeliveryOpt
             from,
             to: [job.email],
             subject: "Your Parallax Food Pass",
-            html: `<p>Hello ${name},</p><p>Your Parallax attendee pass is ready.</p><p><a href="${safeUrl}">Open your QR pass</a></p><p>Keep this pass available for event entry and meal collection.</p>`,
+            text: `Hello ${attendee.name}, your Parallax attendee pass is ready. Open it here: ${passUrl}. Keep this pass available for event entry and meal collection.`,
+            html: `<div style="font-family:Arial,sans-serif;color:#241d2d;max-width:560px;margin:auto"><h2>Your Parallax QR pass</h2><p>Hello ${name}, your attendee pass is ready.</p><p><a href="${safeUrl}">Open your QR pass</a></p><p><img src="cid:parallax-qr" alt="Your personal Parallax QR code" width="280" height="280" style="display:block;width:280px;height:280px" /></p><p>Keep this QR code available for event entry and meal collection. Do not share it with anyone else.</p><p><a href="${safeUrl}">${safeUrl}</a></p></div>`,
+            attachments: [{ filename: "parallax-qr-pass.png", content: qrBase64, content_type: "image/png", content_id: "parallax-qr" }],
           }),
         });
         const result = await response.json() as { id?: string; message?: string };

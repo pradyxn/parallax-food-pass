@@ -6,7 +6,7 @@ import Papa from "papaparse";
 import {
   Activity, ArrowDownToLine, ArrowUpRight, BadgeCheck, Check, CheckCircle2,
   ChefHat, ChevronRight, CircleAlert, ClipboardList, Download, FileSpreadsheet,
-  Home, LogOut, Menu, Plus, QrCode, RefreshCw, Search, ShieldCheck, Sparkles,
+  Home, LogOut, Mail, Menu, Plus, QrCode, RefreshCw, Search, ShieldCheck, Sparkles,
   Upload, Users, Utensils, Vegan, X, XCircle,
 } from "lucide-react";
 import QRScanner from "@/components/QRScanner";
@@ -31,7 +31,7 @@ type SyncSettings = {
   setupError?: string;
 };
 type Attendee = {
-  id: string; pass_token: string; name: string; roll_number: string | null; branch: string | null;
+  id: string; pass_token: string; name: string; roll_number: string | null; email: string | null; branch: string | null;
   preference: "VEG" | "NON_VEG"; source: string; checked_in_at: string | null;
   meal_collected_at: string | null; created_at: string;
 };
@@ -74,6 +74,7 @@ export default function Dashboard() {
   const [syncSettings, setSyncSettings] = useState<SyncSettings | null>(null);
   const [savingSyncSettings, setSavingSyncSettings] = useState(false);
   const [retryingEmails, setRetryingEmails] = useState(false);
+  const [sendingPasses, setSendingPasses] = useState(false);
   const [attendees, setAttendees] = useState<Attendee[]>([]);
   const [search, setSearch] = useState("");
   const [scanResult, setScanResult] = useState<ScanResponse | null>(null);
@@ -341,6 +342,36 @@ export default function Dashboard() {
     }
   };
 
+  const sendPassEmails = async () => {
+    if (!syncSettings?.emailConfigured) {
+      flash("Configure a verified Resend sender and API key before sending QR passes.", true);
+      return;
+    }
+    setSendingPasses(true);
+    let sent = 0;
+    let failed = 0;
+    let remaining = 0;
+    let recipientCount = 0;
+    try {
+      for (let batch = 0; batch < 20; batch++) {
+        const response = await fetch("/api/admin/emails/send", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ retryFailed: batch === 0 }) });
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error || "Could not send QR passes.");
+        sent += Number(data.sent || 0);
+        failed += Number(data.failed || 0);
+        recipientCount = Number(data.recipientCount || recipientCount);
+        remaining = Number(data.remaining || 0);
+        if (remaining === 0) break;
+      }
+      await Promise.all([refreshSummary(), loadAttendees(search)]);
+      flash(`QR pass delivery: ${sent} sent, ${failed} failed. ${remaining ? `${remaining} still pending; click Send QR passes again to continue.` : `Recipients with email: ${recipientCount}.`}`, failed > 0 || remaining > 0);
+    } catch (error) {
+      flash(error instanceof Error ? error.message : "QR pass delivery failed.", true);
+    } finally {
+      setSendingPasses(false);
+    }
+  };
+
   const importCsv = async (file?: File) => {
     if (!file) return;
     if (file.size > 5 * 1024 * 1024) {
@@ -368,6 +399,9 @@ export default function Dashboard() {
       const data = await response.json() as {
         totalRows?: number;
         imported?: number;
+        inserted?: number;
+        updated?: number;
+        unchanged?: number;
         skipped?: number;
         invalid?: number;
         duplicates?: number;
@@ -387,7 +421,7 @@ export default function Dashboard() {
         throw new Error(`${data.error || "Import failed."}${progress}`);
       }
       flash(
-        `CSV rows: ${data.totalRows ?? rows.length}. Imported: ${data.imported ?? 0}; duplicates: ${data.duplicates ?? 0}; invalid rows: ${data.invalid ?? 0}; missing required fields: ${data.missingFields?.length ?? 0}; invalid food preferences: ${data.invalidFoodPreferences?.length ?? 0}; not processed: ${data.notProcessed ?? 0}.`,
+        `CSV rows: ${data.totalRows ?? rows.length}. Added: ${data.inserted ?? data.imported ?? 0}; updated: ${data.updated ?? 0}; unchanged: ${data.unchanged ?? 0}; duplicates: ${data.duplicates ?? 0}; invalid rows: ${data.invalid ?? 0}; missing required fields: ${data.missingFields?.length ?? 0}; invalid food preferences: ${data.invalidFoodPreferences?.length ?? 0}; not processed: ${data.notProcessed ?? 0}.`,
         Boolean(data.invalid || data.duplicates || data.notProcessed),
       );
     } catch (error) { flash(error instanceof Error ? error.message : "CSV import failed.", true); }
@@ -478,11 +512,11 @@ export default function Dashboard() {
 
           {view === "attendees" && <>
             <div className="page-heading"><div><div className="section-kicker">REGISTRATION MANAGEMENT / 04</div><h1>Attendee <em>registry.</em></h1><p>Import your student list, register walk-ins, and retrieve QR passes.</p></div><div className="heading-actions"><a className="button button-secondary" href="/register" target="_blank" rel="noreferrer"><ArrowUpRight size={16} /> Public registration</a><button className="button button-primary" onClick={() => setShowAdd((v) => !v)}><Plus size={17} /> Add attendee</button></div></div>
-            <div className="registry-toolbar"><div className="registry-search"><Search size={17} /><input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search name or roll number" /><span>{filteredAttendees.length} shown</span></div><div className="registry-tools"><button className="button button-secondary button-small" onClick={downloadTemplate}><Download size={15} /> CSV template</button><label className={`button button-secondary button-small file-button ${loading ? "disabled" : ""}`}><Upload size={15} /> Import CSV<input type="file" accept=".csv,text/csv" disabled={loading} onChange={(e) => { void importCsv(e.target.files?.[0]); e.currentTarget.value = ""; }} /></label><button className="button button-secondary button-small" onClick={() => exportReport()}><ArrowDownToLine size={15} /> Export report</button></div></div>
+            <div className="registry-toolbar"><div className="registry-search"><Search size={17} /><input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search name or roll number" /><span>{filteredAttendees.length} shown</span></div><div className="registry-tools"><button className="button button-secondary button-small" onClick={downloadTemplate}><Download size={15} /> CSV template</button><label className={`button button-secondary button-small file-button ${loading ? "disabled" : ""}`}><Upload size={15} /> Import CSV<input type="file" accept=".csv,text/csv" disabled={loading} onChange={(e) => { void importCsv(e.target.files?.[0]); e.currentTarget.value = ""; }} /></label><button className="button button-secondary button-small" onClick={() => void sendPassEmails()} disabled={!syncSettings?.emailConfigured || sendingPasses || loading}><Mail size={15} />{sendingPasses ? "Sending passes…" : "Send QR passes"}</button><button className="button button-secondary button-small" onClick={() => exportReport()}><ArrowDownToLine size={15} /> Export report</button></div></div>
             {importIssues.length > 0 && <section className="import-report" role="status"><strong>{new Set(importIssues.map((issue) => issue.row)).size} CSV row{new Set(importIssues.map((issue) => issue.row)).size === 1 ? "" : "s"} need attention</strong><ul>{importIssues.map((issue, index) => <li key={`${issue.row}-${index}`}>Row {issue.row}: {issue.reason}</li>)}</ul></section>}
-            <section className="panel sync-settings-panel"><div className="panel-heading"><div><div className="section-kicker">PASS EMAILS</div><h2>Automatic delivery</h2><p>Disabled by default. Emails are only queued for new registrations unless email-change delivery is enabled.</p></div></div>{syncSettings ? <><label className="sync-setting-option"><input type="checkbox" checked={syncSettings.automatic_email_enabled} disabled={savingSyncSettings || !syncSettings.emailConfigured || !syncSettings.syncSchemaAvailable} onChange={(event) => void saveSyncSettings({ ...syncSettings, automatic_email_enabled: event.target.checked })} /><span>Send a QR pass email for new registrations</span></label>{!syncSettings.syncSchemaAvailable ? <p className="sync-setting-note">{syncSettings.setupError}</p> : !syncSettings.emailConfigured && <p className="sync-setting-note">Configure Resend on the server before enabling delivery.</p>}<label className="sync-setting-option"><input type="checkbox" checked={syncSettings.email_on_existing_change} disabled={savingSyncSettings || !syncSettings.emailConfigured || !syncSettings.syncSchemaAvailable} onChange={(event) => void saveSyncSettings({ ...syncSettings, email_on_existing_change: event.target.checked })} /><span>Send a pass when an existing attendee's email changes</span></label></> : <p>Loading email settings…</p>}<div className="sync-settings-footer"><span>{summary.syncIntegrationAvailable ? `${summary.emailDelivery.sent} sent · ${summary.emailDelivery.pending} pending · ${summary.emailDelivery.failed} failed` : "Email metrics unavailable until the sync migration is applied."}</span><button className="button button-secondary button-small" disabled={!summary.syncIntegrationAvailable || retryingEmails || (summary.emailDelivery.failed === 0 && summary.emailDelivery.pending === 0)} onClick={() => void retryFailedEmails()}><RefreshCw size={15} />{retryingEmails ? "Retrying…" : "Retry pending / failed emails"}</button></div></section>
+            <section className="panel sync-settings-panel"><div className="panel-heading"><div><div className="section-kicker">PASS EMAILS</div><h2>Automatic delivery</h2><p>Use Send QR passes to email a personal QR image and pass link to every attendee with an email address. Successful sends are not duplicated.</p></div></div>{syncSettings ? <><label className="sync-setting-option"><input type="checkbox" checked={syncSettings.automatic_email_enabled} disabled={savingSyncSettings || !syncSettings.emailConfigured || !syncSettings.syncSchemaAvailable} onChange={(event) => void saveSyncSettings({ ...syncSettings, automatic_email_enabled: event.target.checked })} /><span>Send a QR pass email for new registrations</span></label>{!syncSettings.syncSchemaAvailable ? <p className="sync-setting-note">{syncSettings.setupError}</p> : !syncSettings.emailConfigured && <p className="sync-setting-note">Add RESEND_API_KEY and RESEND_FROM_EMAIL for a verified sending domain before enabling delivery.</p>}<label className="sync-setting-option"><input type="checkbox" checked={syncSettings.email_on_existing_change} disabled={savingSyncSettings || !syncSettings.emailConfigured || !syncSettings.syncSchemaAvailable} onChange={(event) => void saveSyncSettings({ ...syncSettings, email_on_existing_change: event.target.checked })} /><span>Send a pass when an existing attendee's email changes</span></label></> : <p>Loading email settings…</p>}<div className="sync-settings-footer"><span>{summary.syncIntegrationAvailable ? `${summary.emailDelivery.sent} sent · ${summary.emailDelivery.pending} pending · ${summary.emailDelivery.failed} failed` : "Email metrics unavailable until the sync migration is applied."}</span><button className="button button-secondary button-small" disabled={!summary.syncIntegrationAvailable || retryingEmails || (summary.emailDelivery.failed === 0 && summary.emailDelivery.pending === 0)} onClick={() => void retryFailedEmails()}><RefreshCw size={15} />{retryingEmails ? "Retrying…" : "Retry pending / failed emails"}</button></div></section>
             {showAdd && <form className="panel add-attendee-form" onSubmit={addAttendee}><div className="form-title"><div><div className="section-kicker">MANUAL REGISTRATION</div><h3>Add an attendee</h3></div><button type="button" className="icon-button" onClick={() => setShowAdd(false)}><X size={17} /></button></div><div className="form-grid"><label>Full name<input value={newAttendee.name} onChange={(e) => setNewAttendee({ ...newAttendee, name: e.target.value })} placeholder="Attendee name" required /></label><label>Roll number<input value={newAttendee.roll_number} onChange={(e) => setNewAttendee({ ...newAttendee, roll_number: e.target.value })} placeholder="Optional" /></label><label>Email address<input type="email" value={newAttendee.email} onChange={(e) => setNewAttendee({ ...newAttendee, email: e.target.value })} placeholder="Optional" /></label><label>Branch<input value={newAttendee.branch} onChange={(e) => setNewAttendee({ ...newAttendee, branch: e.target.value })} placeholder="e.g. CSM" /></label><label>Food preference<select value={newAttendee.preference} onChange={(e) => setNewAttendee({ ...newAttendee, preference: e.target.value as "VEG" | "NON_VEG" })}><option value="VEG">VEG</option><option value="NON_VEG">NON-VEG</option></select></label></div><div className="form-submit-row"><span>QR pass is generated automatically after saving.</span><button className="button button-primary" type="submit" disabled={loading}><Check size={16} /> Save attendee</button></div></form>}
-            <section className="panel registry-panel"><div className="registry-table-wrap"><table className="registry-table"><thead><tr><th>ATTENDEE</th><th>ROLL NUMBER</th><th>FOOD</th><th>ENTRY</th><th>MEAL</th><th>PASS</th></tr></thead><tbody>{filteredAttendees.map((person) => <tr key={person.id}><td><div className="person-cell"><span className="person-avatar">{person.name.slice(0, 1).toUpperCase()}</span><div><strong>{person.name}</strong><small>{person.branch || "Branch not set"}</small></div></div></td><td className="mono-cell">{person.roll_number || "—"}</td><td><span className={`food-pill ${person.preference === "VEG" ? "pill-veg" : "pill-nonveg"}`}>{person.preference === "VEG" ? <Vegan size={13} /> : <ChefHat size={13} />}{person.preference}</span></td><td><span className={`status-text ${person.checked_in_at ? "status-done" : "status-wait"}`}><i />{person.checked_in_at ? formatTime(person.checked_in_at) : "Pending"}</span></td><td><span className={`status-text ${person.meal_collected_at ? "status-done" : "status-wait"}`}><i />{person.meal_collected_at ? "Collected" : "Pending"}</span></td><td><a className="pass-link" href={`/pass/${person.pass_token}`} target="_blank" rel="noreferrer"><QrCode size={15} /> View pass <ArrowUpRight size={13} /></a></td></tr>)}{!filteredAttendees.length && <tr><td colSpan={6}><div className="empty-state"><Users size={24} /><strong>No attendees found</strong><span>{search ? "Try another name or roll number." : "Import the existing list or add your first attendee."}</span></div></td></tr>}</tbody></table></div><div className="registry-foot"><span>Showing up to 1,000 matching attendees</span><button className="text-button" onClick={() => loadAttendees(search).catch((e) => flash(e.message, true))}><RefreshCw size={14} /> Reload list</button></div></section>
+            <section className="panel registry-panel"><div className="registry-table-wrap"><table className="registry-table"><thead><tr><th>ATTENDEE</th><th>ROLL NUMBER</th><th>EMAIL</th><th>FOOD</th><th>ENTRY</th><th>MEAL</th><th>PASS</th></tr></thead><tbody>{filteredAttendees.map((person) => <tr key={person.id}><td><div className="person-cell"><span className="person-avatar">{person.name.slice(0, 1).toUpperCase()}</span><div><strong>{person.name}</strong><small>{person.branch || "Branch not set"}</small></div></div></td><td className="mono-cell">{person.roll_number || "—"}</td><td className="mono-cell">{person.email || "—"}</td><td><span className={`food-pill ${person.preference === "VEG" ? "pill-veg" : "pill-nonveg"}`}>{person.preference === "VEG" ? <Vegan size={13} /> : <ChefHat size={13} />}{person.preference}</span></td><td><span className={`status-text ${person.checked_in_at ? "status-done" : "status-wait"}`}><i />{person.checked_in_at ? formatTime(person.checked_in_at) : "Pending"}</span></td><td><span className={`status-text ${person.meal_collected_at ? "status-done" : "status-wait"}`}><i />{person.meal_collected_at ? "Collected" : "Pending"}</span></td><td><a className="pass-link" href={`/pass/${person.pass_token}`} target="_blank" rel="noreferrer"><QrCode size={15} /> View pass <ArrowUpRight size={13} /></a></td></tr>)}{!filteredAttendees.length && <tr><td colSpan={7}><div className="empty-state"><Users size={24} /><strong>No attendees found</strong><span>{search ? "Try another name or roll number." : "Import the existing list or add your first attendee."}</span></div></td></tr>}</tbody></table></div><div className="registry-foot"><span>Showing up to 1,000 matching attendees</span><button className="text-button" onClick={() => loadAttendees(search).catch((e) => flash(e.message, true))}><RefreshCw size={14} /> Reload list</button></div></section>
             <div className="registry-note"><FileSpreadsheet size={18} /><div><strong>CSV format</strong><span>Required columns: <code>name</code>, <code>roll_number</code>, and <code>preference</code>. Optional: <code>branch</code>. Google Forms headers such as <code>Hall ticket No:</code>, <code>Section</code>, and <code>Food Preference</code> are recognized. Preference values: VEG or NON_VEG.</span></div></div>
           </>}
         </div>

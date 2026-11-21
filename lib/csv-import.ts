@@ -22,6 +22,7 @@ export type AttendeeImport = {
   roll_number: string;
   branch: string | null;
   preference: Preference;
+  email: string | null;
   source: "IMPORT";
   rowNumber: number;
 };
@@ -70,6 +71,8 @@ export function prepareAttendeeCsvRows(rows: unknown[]) {
     const branch = cleanText(readAttendeeCsvField(rawRow, "branch"), 80) || null;
     const rawPreference = readAttendeeCsvField(rawRow, "preference");
     const preference = cleanPreference(rawPreference);
+    const rawEmail = cleanText(readAttendeeCsvField(rawRow, "email"), 254).toLowerCase();
+    const email = rawEmail || null;
     const missing: string[] = [];
     if (name.length < 2) missing.push("Student name");
     if (!rollNumber) missing.push("Roll number");
@@ -82,6 +85,10 @@ export function prepareAttendeeCsvRows(rows: unknown[]) {
         fields: missing,
         reason: `Missing or invalid required field${missing.length === 1 ? "" : "s"}: ${missing.join(", ")}.`,
       });
+    }
+    if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      issues.push({ row: rowNumber, category: "invalid_row", reason: `Invalid email address "${email}".` });
+      continue;
     }
     if (cleanText(rawPreference) && !preference) {
       issues.push({
@@ -107,6 +114,7 @@ export function prepareAttendeeCsvRows(rows: unknown[]) {
       roll_number: rollNumber,
       branch,
       preference,
+      email,
       source: "IMPORT",
       rowNumber,
     });
