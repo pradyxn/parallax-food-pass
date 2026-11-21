@@ -14,11 +14,12 @@ async function existingPass(rollNumber: string, name: string) {
     .rpc("lookup_attendee_pass_by_roll_number", { p_roll_number: rollNumber })
     .maybeSingle();
   if (error) throw error;
-  if (!data) return null;
-  if (comparableName(data.name) !== comparableName(name)) {
+  const attendee = data as unknown as { pass_token: string; name: string } | null;
+  if (!attendee) return null;
+  if (comparableName(attendee.name) !== comparableName(name)) {
     return { conflict: true as const };
   }
-  return { conflict: false as const, token: data.pass_token };
+  return { conflict: false as const, token: attendee.pass_token };
 }
 
 export async function POST(request: NextRequest) {
