@@ -26,8 +26,8 @@ export async function POST(request: NextRequest) {
   try {
     let body: unknown;
     try { body = await request.json(); }
-    catch { return NextResponse.json({ error: "Complete all registration fields." }, { status: 400 }); }
-    if (!isRecord(body)) return NextResponse.json({ error: "Complete all registration fields." }, { status: 400 });
+    catch { return NextResponse.json({ error: "Enter your name and college roll number." }, { status: 400 }); }
+    if (!isRecord(body)) return NextResponse.json({ error: "Enter your name and college roll number." }, { status: 400 });
 
     const name = cleanText(body.name, 100);
     const rollNumber = normalizeRollNumber(body.roll_number);
@@ -35,16 +35,11 @@ export async function POST(request: NextRequest) {
     const section = cleanText(body.section, 40);
     const preference = cleanPreference(body.preference);
 
-    if (name.length < 2 || !rollNumber || !branch || !section || !preference) {
-      return NextResponse.json({
-        error: "Name, roll number, branch, section and food preference are all required.",
-      }, { status: 400 });
-    }
-    if (!/^[\p{L}\p{N} .&()/_-]+$/u.test(branch) || !/^[\p{L}\p{N} .&()/_-]+$/u.test(section)) {
-      return NextResponse.json({ error: "Enter a valid branch and section." }, { status: 400 });
+    if (name.length < 2 || !rollNumber) {
+      return NextResponse.json({ error: "Enter your full name and college roll number." }, { status: 400 });
     }
 
-    const db = getSupabaseAdmin();
+    // Existing roster members only need their matching name and roll number to retrieve the original pass.
     const current = await existingPass(rollNumber, name);
     if (current?.conflict) {
       return NextResponse.json({
@@ -58,6 +53,16 @@ export async function POST(request: NextRequest) {
       });
     }
 
+    if (!branch || !section || !preference) {
+      return NextResponse.json({
+        error: "To create a new pass, branch, section and food preference are required.",
+      }, { status: 400 });
+    }
+    if (!/^[\p{L}\p{N} .&()/_-]+$/u.test(branch) || !/^[\p{L}\p{N} .&()/_-]+$/u.test(section)) {
+      return NextResponse.json({ error: "Enter a valid branch and section." }, { status: 400 });
+    }
+
+    const db = getSupabaseAdmin();
     const { data, error } = await db.from("attendees").insert({
       name,
       roll_number: rollNumber,
