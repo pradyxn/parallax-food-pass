@@ -25,7 +25,7 @@ export default function RegisterPage() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
 
-  const update = <K extends keyof RegistrationForm>(key: K, value: RegistrationForm[K]) => {
+  const update = <K extends keyof RegistrationForm,>(key: K, value: RegistrationForm[K]) => {
     setForm((current) => ({ ...current, [key]: value }));
   };
 
