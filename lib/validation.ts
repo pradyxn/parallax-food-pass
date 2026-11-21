@@ -1,5 +1,5 @@
 export type Preference = "VEG" | "NON_VEG";
-export type Source = "IMPORT" | "WALK_IN" | "MANUAL";
+export type Source = "IMPORT" | "WALK_IN" | "MANUAL" | "SELF_REGISTERED";
 
 export function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
