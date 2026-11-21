@@ -9,7 +9,7 @@ export const runtime = "nodejs";
 
 type ScanMode = "ENTRY" | "MEAL_PREVIEW" | "MEAL_CONFIRM" | "MEAL_CANCEL";
 const RESERVATION_MILLISECONDS = 5 * 60 * 1000;
-const attendeeFields = "id, pass_token, name, roll_number, branch, preference, checked_in_at, meal_collected_at";
+const attendeeFields = "id, pass_token, name, roll_number, branch, section, preference, checked_in_at, meal_collected_at";
 const attendeeFieldsWithReservation = `${attendeeFields}, meal_reserved_at, meal_reservation_token`;
 
 function displayAttendee(attendee: {
@@ -18,6 +18,7 @@ function displayAttendee(attendee: {
   name: string;
   roll_number: string | null;
   branch: string | null;
+  section: string | null;
   preference: string;
   checked_in_at: string | null;
   meal_collected_at: string | null;
@@ -28,6 +29,7 @@ function displayAttendee(attendee: {
     name: attendee.name,
     roll_number: attendee.roll_number,
     branch: attendee.branch,
+    section: attendee.section,
     preference: attendee.preference,
     checked_in_at: attendee.checked_in_at,
     meal_collected_at: attendee.meal_collected_at,
