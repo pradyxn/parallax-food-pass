@@ -8,7 +8,7 @@ A mobile-first attendee and meal operations app for Parallax Freshers 2026. It p
 - **One QR per attendee:** QR values are unguessable UUID pass tokens. They do not encode names, roll numbers, or food preferences.
 - **Separate scans:** entry scan sets `checked_in_at`; the food scan reserves a meal, then a staff confirmation after handover sets `meal_collected_at`.
 - **Duplicate protection:** conditional database updates prevent duplicate entry scans, and a five-minute meal reservation prevents multiple food counters from handling the same pass at once.
-- **Access control:** admin APIs require a signed, HTTP-only staff session. The Supabase service-role key stays on the server and is never exposed to the browser. Public registration and pass lookup use server routes.
+- **Access control:** admin APIs require a signed, HTTP-only staff session. The Supabase service-role key stays on the server and is never exposed to the browser. Public self-registration, existing-pass retrieval, and pass lookup use server routes. Public self-registration creates one attendee record per unique roll number.
 
 ## 1. Create the shared database
 
@@ -62,7 +62,7 @@ Deploy this folder as a Next.js project on Vercel (or another Node.js host that 
 After deployment:
 
 - Staff sign in at `/`.
-- Attendees register at `/register`.
+- Attendees register at `/register` using their name, roll number, branch, section, and meal preference. Existing roster members can enter the matching name and roll number to retrieve their existing QR pass.
 - Generated attendee passes open at `/pass/{token}`.
 - Use the same deployed URL on every scanning phone. Camera access requires HTTPS (the Vercel URL provides HTTPS).
 
@@ -75,9 +75,9 @@ In **Attendees → CSV template**, download the starter CSV. The admin report ex
 | `name` | Yes | Full attendee name |
 | `preference` | Yes | `VEG` or `NON_VEG` |
 | `roll_number` | Yes | Duplicate roll numbers are reported and not imported |
-| `branch` | No | Department / branch |
+| `branch` | No | Department / branch |\n| `section` | No | Class section (kept separately from branch) |
 
-The importer normalizes header case, whitespace, underscores, hyphens, and punctuation. It recognizes Google Forms headers such as `Name`, `Hall ticket No:`, ` Section`, and `Food Preference `, as well as aliases such as `Full Name`, `Student Name`, `Hall Ticket Number`, `Department`, and `What is your food preference?`. Preference values such as `Vegetarian` and `Non veg` are normalized to `VEG` and `NON_VEG`. The admin import API accepts `dryRun: true` alongside `rows` to validate and report the rows without reading or writing attendee records. The importer reports missing fields, invalid food preferences, duplicates, invalid rows, and rows left unprocessed after a database failure. Importing a row generates its QR token automatically. Use **Export report** to download the current registry, attendance, and meal collection statuses.
+The importer normalizes header case, whitespace, underscores, hyphens, and punctuation. It recognizes Google Forms headers such as `Name`, `Hall ticket No:`, ` Section`, and `Food Preference `, as well as aliases such as `Full Name`, `Student Name`, `Hall Ticket Number`, `Department`, and `What is your food preference?`. When a legacy Google Forms sheet has only a `Section` column and no separate `Branch` column, its value remains in the existing branch/class field for compatibility. CSV files with both `branch` and `section` columns are imported separately. Preference values such as `Vegetarian` and `Non veg` are normalized to `VEG` and `NON_VEG`. The admin import API accepts `dryRun: true` alongside `rows` to validate and report the rows without reading or writing attendee records. The importer reports missing fields, invalid food preferences, duplicates, invalid rows, and rows left unprocessed after a database failure. Importing a row generates its QR token automatically. Use **Export report** to download the current registry, attendance, and meal collection statuses.
 
 ## 6. Synchronize Google Forms responses
 
