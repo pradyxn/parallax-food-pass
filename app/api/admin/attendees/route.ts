@@ -13,7 +13,7 @@ export async function GET(request: NextRequest) {
   try {
     const q = cleanText(request.nextUrl.searchParams.get("q"), 80);
     const db = getSupabaseAdmin();
-    let query = db.from("attendees").select("id, pass_token, name, roll_number, email, branch, preference, source, checked_in_at, meal_collected_at, created_at").order("created_at", { ascending: false }).limit(1000);
+    let query = db.from("attendees").select("id, pass_token, name, roll_number, email, branch, section, preference, source, checked_in_at, meal_collected_at, created_at").order("created_at", { ascending: false }).limit(1000);
     if (q) {
       const safeQ = q.replace(/[^a-zA-Z0-9@.\-\s]/g, " ").trim();
       if (safeQ) query = query.or(`name.ilike.%${safeQ}%,roll_number.ilike.%${safeQ}%,email.ilike.%${safeQ}%`);
@@ -43,6 +43,7 @@ export async function POST(request: NextRequest) {
     const name = cleanText(body.name, 100);
     const roll_number = normalizeRollNumber(body.roll_number);
     const branch = cleanText(body.branch, 80);
+    const section = cleanText(body.section, 40);
     const email = cleanText(body.email, 254).toLowerCase();
     const preference = cleanPreference(body.preference);
     if (name.length < 2 || !preference) {
@@ -53,8 +54,8 @@ export async function POST(request: NextRequest) {
     }
     const db = getSupabaseAdmin();
     const { data, error } = await db.from("attendees").insert({
-      name, roll_number, email: email || null, branch: branch || null, preference, source: "MANUAL",
-    }).select("id, pass_token, name, roll_number, branch, preference, source, checked_in_at, meal_collected_at, created_at").single();
+      name, roll_number, email: email || null, branch: branch || null, section: section || null, preference, source: "MANUAL",
+    }).select("id, pass_token, name, roll_number, branch, section, preference, source, checked_in_at, meal_collected_at, created_at").single();
     if (error) {
       if (error.code === "23505") return NextResponse.json({ error: "That roll number is already registered." }, { status: 409 });
       throw error;
