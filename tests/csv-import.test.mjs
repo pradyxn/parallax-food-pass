@@ -90,11 +90,22 @@ test("headers and preference values accept the requested variants", () => {
     assert.equal(normalizeAttendeeCsvHeader(header), "preference");
   }
   assert.equal(identifyAttendeeCsvField("Hall ticket No:"), "roll_number");
-  assert.equal(identifyAttendeeCsvField(" Section"), "branch");
+  assert.equal(identifyAttendeeCsvField(" Section"), "section");
   for (const value of ["Veg", "Vegetarian"]) assert.equal(cleanPreference(value), "VEG");
   for (const value of ["Non veg", "Non-Veg", "Non-Vegetarian"]) {
     assert.equal(cleanPreference(value), "NON_VEG");
   }
+});
+
+
+test("separate branch and section columns round-trip independently", () => {
+  const preview = prepareAttendeeCsvRows([
+    { name: "Student One", roll_number: "26CS001", branch: "CSM", section: "2A", preference: "VEG" },
+  ]);
+
+  assert.equal(preview.parsedRows.length, 1);
+  assert.equal(preview.parsedRows[0].branch, "CSM");
+  assert.equal(preview.parsedRows[0].section, "2A");
 });
 
 test("dry-run preparation preserves duplicate and invalid-row reporting", () => {
