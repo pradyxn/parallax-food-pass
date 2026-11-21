@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600;700;800&family=Manrope:wght@400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Orbitron:wght@500;600;700;800;900&family=Space+Grotesk:wght@400;500;600;700&family=Rajdhani:wght@500;600;700;800&display=swap');
 
 :root{--bg:#090812;--bg2:#0e0c18;--panel:#13111e;--panel2:#191626;--line:#282438;--muted:#9691a7;--text:#f4f0fa;--purple:#a78bfa;--purple2:#7c5ce7;--pink:#d4a8ff;--green:#8ed6ae;--red:#f0a0ad;--amber:#e9c987;--mono:'DM Mono',monospace;--sans:'DM Sans',sans-serif;--display:'Manrope',sans-serif}
 *{box-sizing:border-box}html,body{margin:0;min-height:100%;background:var(--bg);color:var(--text);font-family:var(--sans)}body{font-size:14px}button,input,select{font:inherit}button{cursor:pointer}a{color:inherit;text-decoration:none}button:disabled{opacity:.55;cursor:not-allowed}::selection{background:#7758c4;color:white}
@@ -66,4 +66,401 @@
   .manual-form .button {
     min-height: 44px;
   }
+}
+
+
+/* =========================================================
+   PARALLAX / 2K26 — poster-led visual system
+   Dark stage, ultraviolet light, hot magenta and electric blue.
+   UI structure and operational states intentionally unchanged.
+   ========================================================= */
+:root{
+  --bg:#07030d;
+  --bg2:#0b0613;
+  --panel:#100a1b;
+  --panel2:#170d25;
+  --line:#38204d;
+  --muted:#aa9bb8;
+  --text:#faf5ff;
+  --purple:#d43cff;
+  --purple2:#8928f5;
+  --pink:#ff42d6;
+  --green:#8ed6ae;
+  --red:#ff8da8;
+  --amber:#f4c77c;
+  --mono:'DM Mono',monospace;
+  --sans:'Space Grotesk',sans-serif;
+  --display:'Rajdhani',sans-serif;
+}
+html,body{background:#07030d;color:var(--text);font-family:var(--sans)}
+body{position:relative;background-image:radial-gradient(ellipse at 50% -14%,#4a087b55 0,transparent 42%),radial-gradient(ellipse at 100% 42%,#24005a40 0,transparent 32%),linear-gradient(180deg,#07030d 0%,#0b0613 56%,#07030d 100%)}
+body:before{
+  content:"";position:fixed;inset:0;z-index:0;pointer-events:none;opacity:.25;
+  background:
+    linear-gradient(transparent 96%,#c72cff1c 97%),
+    linear-gradient(90deg,transparent 96%,#c72cff1c 97%);
+  background-size:42px 42px;
+  mask-image:linear-gradient(to bottom,#000 0%,#000 36%,transparent 100%);
+}
+body:after{
+  content:"";position:fixed;inset:-20%;z-index:0;pointer-events:none;opacity:.34;
+  background:radial-gradient(ellipse at 12% 12%,#d500ff25 0,transparent 26%),radial-gradient(ellipse at 88% 20%,#1d7dff19 0,transparent 24%);
+  filter:blur(22px);
+}
+#\__next,main,.app-shell,.login-shell{position:relative;z-index:1}
+button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid #ec8cff;outline-offset:3px}
+::selection{background:#d52cff;color:#fff}
+
+/* Neon identity and controls */
+.brand-mark{
+  border:1px solid #dd4dff;background:linear-gradient(145deg,#40105f,#140922);
+  color:#fff;box-shadow:0 0 0 1px #e42cff24,0 0 22px #d20bff42,inset 0 0 18px #b51aff22;
+}
+.brand-mark span{color:#ff77e9}
+.brand-lockup strong,.sidebar-brand strong,.public-wordmark strong{font-family:'Orbitron',sans-serif;letter-spacing:.09em}
+.brand-lockup small,.sidebar-brand small{color:#b89bc9}
+.section-kicker,.eyebrow,.nav-label,.sidebar-version,.breadcrumb,.topbar-date,.staff-label,.form-step,.pass-top-tag{
+  font-family:'DM Mono',monospace;letter-spacing:.16em;
+}
+.section-kicker{color:#e37bff}
+.eyebrow-line{background:linear-gradient(90deg,#fb3ee5,#6eafff);box-shadow:0 0 10px #ed31ff}
+.button{border-radius:8px;letter-spacing:.035em}
+.button-primary{
+  background:linear-gradient(105deg,#951aff 0%,#d21ce8 48%,#f53ab8 100%);
+  border-color:#ef8aff;color:#fff;
+  box-shadow:0 0 0 1px #ef49ff20,0 7px 24px #ba19ed35,0 0 25px #d51aff22;
+}
+.button-primary:hover{background:linear-gradient(105deg,#a52bff,#eb2ae8 48%,#ff54c9);box-shadow:0 0 0 1px #ffa0ff55,0 8px 30px #d51aff50}
+.button-secondary{background:#170d25;border-color:#54306f;color:#f0e2fa}
+.button-secondary:hover{background:#251038;border-color:#b14bde;color:#fff}
+.button-ghost{border-color:#513065;color:#e2c9f3}
+.icon-button{background:#1d102a;border-color:#57316d;color:#edceff}
+.section-kicker{color:#dc8aff}
+.live-dot{background:#69f4d0;box-shadow:0 0 0 4px #69f4d022,0 0 12px #69f4d077}
+
+/* Login / landing */
+.login-shell{background:#08030e}
+.login-art{
+  background:radial-gradient(ellipse at 50% 35%,#6500a2 0%,#24103d 40%,#100818 73%,#08030e 100%);
+}
+.login-art:before{
+  background:
+    linear-gradient(130deg,#09031155 4%,transparent 42%,#080310c9 100%),
+    repeating-linear-gradient(0deg,transparent 0 39px,#f44aff12 40px),
+    repeating-linear-gradient(90deg,transparent 0 39px,#f44aff12 40px);
+}
+.login-art:after{border-color:#eb42ff55;box-shadow:0 0 0 36px #d82cff12,0 0 0 90px #d82cff0b,0 0 100px #d000ff40}
+.orbit{border-color:#e36cff55}
+.eyebrow{color:#f2b7ff}
+.login-art h1{font-family:'Orbitron',sans-serif;letter-spacing:-.065em;text-shadow:0 0 28px #c51aff66}
+.login-art h1 em,.page-heading h1 em,.public-intro h1 em,.pass-card-banner h1 em{color:#ff67dc;text-shadow:0 0 22px #e31aff8c}
+.login-art-copy p{color:#e0c8ed}
+.login-art-bottom{border-color:#d557ff55;color:#c7a8d6}
+.login-panel{
+  background:radial-gradient(ellipse at 95% 2%,#4d126b66,transparent 44%),#0b0612;
+}
+.login-heading h2{font-family:'Rajdhani',sans-serif;font-weight:700;letter-spacing:-.025em}
+.login-heading .section-kicker{color:#f078ff}
+.login-form label,.public-form label,.form-grid label{color:#e2cce9}
+.login-form input,.public-form input,.form-grid input,.form-grid select{
+  background:#0c0713;border-color:#4b2b60;color:#fff;
+}
+.login-form input:focus,.public-form input:focus,.form-grid input:focus,.form-grid select:focus{
+  border-color:#e04cff;box-shadow:0 0 0 3px #d52cff22,0 0 20px #bb14e31b;
+}
+.login-form input::placeholder,.public-form input::placeholder,.form-grid input::placeholder{color:#897594}
+.login-foot{border-color:#3a214b;color:#a795b3}
+.public-register-link{color:#f08cff}
+.public-register-link:hover{color:#fff;text-shadow:0 0 12px #df43ff}
+
+/* App frame / sidebar */
+.app-shell{background:radial-gradient(ellipse at 86% 0%,#4a087b36,transparent 37%),transparent}
+.sidebar{
+  background:linear-gradient(180deg,#10071b 0%,#0b0612 100%);
+  border-right-color:#49205f;
+  box-shadow:8px 0 40px #0007;
+}
+.sidebar-brand{border-bottom-color:#49205f}
+.sidebar-event{
+  border-color:#8b35b0;background:linear-gradient(125deg,#3c1258,#1c0c2c 72%);
+  box-shadow:inset 0 0 25px #d52cff12,0 0 22px #b01be01a;
+}
+.event-symbol{background:#d02cff30;color:#f5a0ff}
+.sidebar-event .event-live{color:#84f1d1}
+.event-live i{background:#69f4d0;box-shadow:0 0 9px #69f4d0}
+.nav-label{color:#a07eb4}
+.nav-item{color:#b9a8c7}
+.nav-item:hover{background:#21102f;color:#fff}
+.nav-active{
+  background:linear-gradient(100deg,#4d176c,#241039);
+  border-color:#9a39c4;color:#fff;box-shadow:inset 3px 0 #f449e5,0 0 18px #b51be01c;
+}
+.nav-active>svg:first-child{color:#ff83e6}
+.nav-chevron{color:#f18cff}
+.sidebar-help{border-color:#49285c;background:#180d25}
+.help-icon{background:#b52ddb30;color:#ff93ed}
+.sidebar-version{border-color:#442254;color:#947aa8}
+.sidebar-version span{color:#e18dff}
+.topbar{border-bottom-color:#3a1c4c;background:#0b0613db}
+.breadcrumb{color:#a48cae}
+.breadcrumb span{color:#744a85}
+.breadcrumb strong{color:#f0d6fa}
+.topbar-date{color:#ac91ba;border-right-color:#533060}
+.staff-avatar{border-color:#d650ed;background:#40105c;color:#fff;box-shadow:0 0 13px #d52cff55}
+.staff-label{color:#d2b6df}
+.content-area{background:transparent}
+.page-heading h1{
+  font-family:'Rajdhani',sans-serif;font-weight:800;letter-spacing:-.025em;
+  text-shadow:0 0 26px #a21dd51a;
+}
+.page-heading p{color:#b19fb9}
+.page-heading .section-kicker{color:#e978ff}
+.station-chip{border-color:#5e3980;background:#261035;color:#e8b9ff;box-shadow:0 0 18px #a52adc1b}
+.station-chip .live-dot{background:#69f4d0}
+
+/* Panels, counters and information blocks */
+.panel,.stat-card{
+  border-color:#432454;
+  background:linear-gradient(145deg,#160c23 0%,#0e0817 100%);
+  box-shadow:0 12px 35px #0003,inset 0 1px #ffffff05;
+}
+.stat-card{border-radius:11px}
+.stat-card-featured{
+  background:linear-gradient(125deg,#4a126b,#241038 78%);
+  border-color:#a240ce;box-shadow:0 0 26px #b51be01e,inset 0 0 22px #d72bff11;
+}
+.stat-top{color:#b69fc3}
+.stat-top svg{color:#e79aff}
+.stat-card-featured .stat-top{color:#f0caff}
+.stat-value{font-family:'Rajdhani',sans-serif;font-weight:700;color:#fff;text-shadow:0 0 16px #d92bff28}
+.stat-foot{color:#b09db9}
+.stat-positive{color:#81f1c5}
+.stat-accent-dot{background:#f047dc;box-shadow:0 0 9px #f047dc}
+.stat-watermark{color:#f1a2ff0d}
+.mini-progress{background:#382048}
+.mini-progress i,.station-progress i,.readiness-track i{background:linear-gradient(90deg,#7d24ff,#ed35db 62%,#37cfff)}
+.progress-purple i{background:linear-gradient(90deg,#9b24ff,#ee42e6,#29caff)}
+.stat-bottom-label{color:#c186de}
+.panel-heading h2,.scanner-panel-head h2,.station-totals h3{
+  font-family:'Rajdhani',sans-serif;font-weight:700;color:#fff;letter-spacing:.005em;
+}
+.panel-heading p,.scanner-panel-head p{color:#aa99b5}
+.panel-icon{border-color:#633078;background:#321247;color:#f39aff}
+.food-count{border-color:#492758;background:#1a0e29}
+.food-count span{color:#b9a3c4}
+.food-count strong{font-family:'Rajdhani',sans-serif;color:#fff}
+.food-count-icon{box-shadow:inset 0 0 12px #ffffff08}
+.veg-count .food-count-icon{background:#173c39;color:#8cf1d0}
+.nonveg-count .food-count-icon{background:#4a164b;color:#ff91df}
+.split-bar{background:#462251}
+.split-veg{background:linear-gradient(90deg,#4cbf9b,#9cf2ca)}
+.split-nonveg{background:linear-gradient(90deg,#a92cbf,#ff5bc8)}
+.meal-remaining{color:#c4b3cd}
+.meal-remaining>div{color:#b6a4bf}
+.meal-remaining strong{color:#fff}
+.veg-dot{background:#6bd8b5}
+.nonveg-dot{background:#ef55cf}
+.action-row{border-top-color:#43224f;color:#f6eaff}
+.action-row span{color:#ad9ab8}
+.action-row>svg{color:#b69bc3}
+.action-row:hover>svg{color:#ff7de7}
+.action-entry{background:#36134e;color:#e78bff}
+.action-food{background:#45153f;color:#ff80d7}
+.action-people{background:#143e3b;color:#80efce}
+.readiness-number{color:#ed9aff}
+.readiness-number small{color:#a46abf}
+.readiness-track{background:#392047}
+.readiness-labels{color:#ae9bb8}
+.readiness-labels strong{color:#f7eafa}
+.note-symbol{background:#35124a;color:#ed8cff}
+.note-panel strong{color:#f9efff}
+.note-panel p{color:#b09eb9}
+.sync-status-panel>.panel-heading>svg{color:#f185ff}
+.sync-status-counts>div{border-color:#482655;background:#1a0e28}
+.sync-status-counts span{color:#b59ec2}
+.sync-status-counts strong{font-family:'Rajdhani',sans-serif;color:#fff}
+.sync-setting-option{color:#dfcde8}
+.sync-setting-option input{accent-color:#e73be4}
+.sync-setting-note{color:#ffd48a}
+.sync-settings-footer{border-top-color:#462251;color:#b9a4c3}
+
+/* Scanner and gate experience */
+.scanner-panel{border-color:#592a70}
+.scanner-panel-head{border-bottom:1px solid #4a235e;padding-bottom:15px}
+.station-icon{box-shadow:0 0 22px #b52bdb1b}
+.station-entry{background:#35114e;color:#f09bff}
+.station-meal{background:#4a1743;color:#ff89db}
+.scanner-frame{
+  border-color:#8b3da7;
+  background:radial-gradient(ellipse at 50% 50%,#26113c,#0b0712 74%);
+  box-shadow:0 0 35px #a524e31b,inset 0 0 40px #db27ff10;
+}
+.scanner-overlay{background:linear-gradient(140deg,#170a25e8,#090510ee);color:#e68aff}
+.scanner-overlay strong{color:#fff}
+.scanner-overlay span{color:#b5a0bf}
+.scan-target{
+  border-color:#ff6ce9;box-shadow:0 0 0 999px #09031170,0 0 34px #df31ff50;
+}
+.scan-target:before,.scan-target:after{border-color:#6de8ff}
+.scan-target span{background:linear-gradient(90deg,transparent,#ff59e2,#5de9ff,transparent);box-shadow:0 0 12px #f04dff}
+.scanner-tag{background:#0a0413dd;border-color:#7c3798;color:#f4c5ff}
+.scanner-hint{color:#b39fbf}
+.manual-divider{color:#a78bae}
+.manual-divider:before,.manual-divider:after{background:#482451}
+.input-with-icon{border-color:#543065;background:#0e0717;color:#bb9dca}
+.input-with-icon input{color:#fff}
+.scan-processing{color:#f1a1ff}
+.scan-success{background:#133a315c;border-color:#3d9a7d}
+.scan-duplicate{background:#48321c66;border-color:#99713c}
+.scan-error{background:#4b172f66;border-color:#aa3c67}
+.scan-success .scan-result-symbol{color:#7af0c9}
+.scan-duplicate .scan-result-symbol{color:#ffd080}
+.scan-error .scan-result-symbol{color:#ff91af}
+.scan-person-name{font-family:'Rajdhani',sans-serif;font-size:22px;color:#fff}
+.scan-person-meta{color:#c1aecb}
+.scan-status-tag{background:#24132f;color:#d4c1dd}
+.food-callout{border-top-color:#ffffff20;color:#d4c0df}
+.food-callout b{color:#fff}
+.scan-ready{background:#2d1740;border-color:#a646d0}
+.scan-ready .scan-result-symbol{color:#ed91ff}
+.station-totals{border-color:#512765}
+.station-big-number{font-family:'Rajdhani',sans-serif;color:#fff}
+.station-big-number small{color:#b49cbe}
+.station-progress{background:#3a2049}
+.station-detail{border-color:#442352;color:#b8a3c1}
+.station-rule{border-color:#4c285d}
+.rule-icon{background:#351349;color:#f19aff}
+
+/* Registry and tables */
+.registry-toolbar{border-color:#442453}
+.registry-search{border-color:#533064;background:#11091b;color:#cba7d8}
+.registry-search input{color:#fff}
+.registry-search input::placeholder{color:#927b9e}
+.registry-search>span{color:#b99ac4}
+.registry-tools .button{border-color:#57306a}
+.registry-table-wrap{border-color:#4a255c}
+.registry-table th{background:#1a0c28;color:#e6a0f6;border-bottom-color:#63307b}
+.registry-table td{border-bottom-color:#392047;color:#dfcde7}
+.registry-table tr:hover td{background:#1a0c28}
+.person-avatar{background:#37134c;color:#f5b2ff;border-color:#8739a3}
+.person-cell strong{color:#fff}
+.person-cell small{color:#b49cbe}
+.mono-cell{color:#d5bedf}
+.pass-link{color:#f08cff}
+.pass-link:hover{color:#fff;text-shadow:0 0 12px #db31ff}
+.food-pill{border-color:#654072}
+.pill-veg{background:#143b35;color:#8ef0c8}
+.pill-nonveg{background:#45173f;color:#ff9bdf}
+.status-done{color:#86ebc6}
+.status-wait{color:#dfbd83}
+.registry-note{border-color:#573068;background:#1d0e2a;color:#bca7c7}
+.registry-note strong{color:#f3d8ff}
+.registry-note span{color:#b8a2c2}
+.registry-note code{color:#ff9be9}
+.registry-foot{border-color:#462451;color:#a891b6}
+.empty-state{color:#b7a1c1}
+.empty-state strong{color:#f8edff}
+.import-report{border-color:#a94b76;background:#42132d88;color:#ffadca}
+.import-report strong{color:#ffe2ed}
+
+/* Public registration surface */
+.public-shell,.pass-shell{
+  background:
+    radial-gradient(ellipse at 50% 0%,#53107855,transparent 44%),
+    radial-gradient(ellipse at 100% 65%,#1c2c7950,transparent 34%),
+    #08030e;
+}
+.public-top,.pass-top{border-bottom-color:#492158}
+.public-wordmark strong{color:#fff;letter-spacing:.12em}
+.public-back,.pass-top>a{color:#dcb3ef}
+.public-back:hover,.pass-top>a:hover{color:#fff}
+.public-edition,.pass-top-tag{color:#dc8cf0}
+.public-intro h1{
+  font-family:'Orbitron',sans-serif;font-size:clamp(46px,6vw,76px);
+  line-height:1.02;letter-spacing:-.07em;text-shadow:0 0 36px #a31de955;
+}
+.public-intro h1 em{color:#ff68df}
+.public-intro p{color:#c4b0ce;line-height:1.75}
+.public-event-chip{
+  border-color:#8b3fa5;background:linear-gradient(105deg,#3d1158,#1c0c2d);
+  color:#f4c5ff;box-shadow:0 0 24px #cc24e51a;
+}
+.public-event-chip b{border-left-color:#75418a;color:#fff}
+.public-form{
+  border-color:#8538a0;border-radius:12px;
+  background:linear-gradient(150deg,#1b0d29,#0d0715);
+  box-shadow:0 25px 70px #0008,0 0 34px #b020e51b,inset 0 1px #ff91ff15;
+}
+.form-card-head{border-bottom-color:#4d285d}
+.form-card-head h2{font-family:'Rajdhani',sans-serif;font-size:26px;color:#fff}
+.form-step{color:#ed9dff}
+.public-form label{color:#e5cfea}
+.public-form input,.public-form select{background:#0a0511;border-color:#603575;color:#fff}
+.public-form select option,.form-grid select option{background:#160a21;color:#fff}
+.public-form input:focus,.public-form select:focus{border-color:#f04be3;box-shadow:0 0 0 3px #e633dc24,0 0 20px #cb22ff20}
+.public-form input::placeholder{color:#92769f}
+.public-submit{font-family:'Rajdhani',sans-serif;font-size:15px;font-weight:700;letter-spacing:.08em;text-transform:uppercase}
+.secure-note{color:#b9a5c5}
+.secure-note svg{color:#74eac7}
+.form-disclaimer{color:#a991b5;line-height:1.7}
+.error-inline{background:#47132980;border-color:#a83a66;color:#ffadca}
+.public-footer{border-top-color:#452052;color:#967ea5}
+
+/* Official QR ticket: screen version remains dark; QR itself stays white for scanning. */
+.pass-shell{align-items:center}
+.pass-card{
+  border:1px solid #a542bf;border-radius:12px;
+  background:linear-gradient(145deg,#1b0d29,#0c0614);color:#fbf2ff;
+  box-shadow:0 25px 80px #0009,0 0 34px #cb1df52c;
+}
+.pass-card-banner{
+  background:
+    radial-gradient(ellipse at 80% 35%,#5c147a 0%,#29103e 47%,#100719 100%);
+  color:#fff;
+}
+.pass-card-banner:after{border-color:#ff6ce75c;box-shadow:0 0 0 23px #e85bff12,0 0 0 58px #e85bff0b}
+.pass-banner-orbit{border-color:#28d9ff90;box-shadow:0 0 14px #26d7ff4c}
+.pass-card-banner .section-kicker{color:#f5a8ff}
+.pass-logo-line{font-family:'Orbitron',sans-serif;color:#ff8be9;text-shadow:0 0 16px #da2bff70}
+.pass-card-banner h1{font-family:'Orbitron',sans-serif;font-size:clamp(30px,7vw,40px);letter-spacing:-.075em;text-shadow:0 0 26px #d52cff5c}
+.pass-date{color:#d6b8e4}
+.pass-ticket-body{background:linear-gradient(180deg,#160b22,#0c0713)}
+.pass-attendee-info .section-kicker{color:#d18ae7}
+.pass-attendee-info h2{font-family:'Rajdhani',sans-serif;font-size:27px;color:#fff}
+.pass-attendee-info p{color:#c1a9cc}
+.pass-food-line{border-color:#573064}
+.pass-food-line>span{color:#b49bbf}
+.pass-food-line strong{color:#fff}
+.pass-veg{color:#72e8bd}
+.pass-nonveg{color:#ff91dc}
+.pass-qr{padding:22px 0 18px}
+.qr-image-wrap{border:1px solid #fff;border-radius:8px;background:#fff;box-shadow:0 0 25px #d52cff25}
+.pass-qr>span{color:#e9d3f2}
+.pass-qr>small{color:#a88bb5}
+.pass-perforation{border-top-color:#704180}
+.pass-perforation i{background:#08030e}
+.pass-bottom-line{color:#b99bc6}
+.pass-actions{gap:10px}
+.pass-instructions{border-color:#563066;background:#180c25;color:#c2afcc}
+.pass-instructions svg{color:#72e8bd}
+.pass-error h1{color:#fff}
+.pass-error p{color:#bba8c5}
+.pass-loading{color:#c2a9ce}
+.pass-loading .brand-mark{box-shadow:0 0 35px #d52cff45}
+
+/* Subtle neon details for interactive feedback */
+.toast{border-color:#8c3ca8;background:#1c0d29;color:#f7e5ff;box-shadow:0 12px 40px #0008,0 0 22px #c61be52b}
+.toast-error{background:#461329;border-color:#a83a66;color:#ffb0c7}
+.toast-error button{color:#ffb0c7}
+button:hover,.pass-link:hover{transition:all .18s ease}
+@media(max-width:650px){
+  .login-panel{background:radial-gradient(ellipse at 50% 0%,#4c0f6955,transparent 42%),#0b0612}
+  .public-intro h1{font-size:clamp(42px,13vw,58px)}
+  .public-form{box-shadow:0 18px 45px #0008,0 0 25px #b020e51a}
+  .pass-card{box-shadow:0 18px 55px #0009,0 0 24px #c51cf52c}
+}
+@media print{
+  .pass-shell{background:#fff!important}
+  .pass-card{background:#0c0614!important;color:#fff!important;print-color-adjust:exact;-webkit-print-color-adjust:exact}
+  .pass-ticket-body{background:#0c0614!important;print-color-adjust:exact;-webkit-print-color-adjust:exact}
 }
