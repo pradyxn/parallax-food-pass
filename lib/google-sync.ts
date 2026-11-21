@@ -61,7 +61,7 @@ export function prepareGoogleRegistrations(rawRows: unknown[]) {
 
     const name = cleanText(readAttendeeCsvField(rawRow, "name"), 100);
     const rollNumber = normalizeRollNumber(readAttendeeCsvField(rawRow, "roll_number"));
-    const branch = cleanText(readAttendeeCsvField(rawRow, "branch"), 80) || null;
+    const branch = cleanText(readAttendeeCsvField(rawRow, "branch") ?? readAttendeeCsvField(rawRow, "section"), 80) || null;
     const rawPreference = readAttendeeCsvField(rawRow, "preference");
     const preference = cleanPreference(rawPreference);
     const email = readEmail(rawRow);
