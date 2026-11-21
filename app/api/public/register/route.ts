@@ -6,13 +6,12 @@ import { cleanText, normalizeRollNumber, cleanPreference, isRecord } from "@/lib
 export const runtime = "nodejs";
 
 function comparableName(value: string) {
-  return value.normalize("NFKC").toLocaleLowerCase("en-IN").replace(/[^\p{L}\p{N}]+/gu, "");
+  return value.normalize("NFKC").trim().replace(/\s+/g, " ").toLocaleLowerCase("en-IN");
 }
 
 async function existingPass(rollNumber: string, name: string) {
-  const { data, error } = await getSupabaseAdmin().from("attendees")
-    .select("pass_token, name")
-    .eq("roll_number", rollNumber)
+  const { data, error } = await getSupabaseAdmin()
+    .rpc("lookup_attendee_pass_by_roll_number", { p_roll_number: rollNumber })
     .maybeSingle();
   if (error) throw error;
   if (!data) return null;
