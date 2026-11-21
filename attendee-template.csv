@@ -1,3 +1,3 @@
-name,roll_number,branch,preference
-Aarav Kumar,23CS001,CSM,VEG
-Diya Reddy,23CS002,CSM,NON_VEG
+name,roll_number,branch,section,preference
+Aarav Kumar,23CS001,CSM,A,VEG
+Diya Reddy,23CS002,CSM,B,NON_VEG
