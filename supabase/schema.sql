@@ -10,8 +10,9 @@ create table if not exists public.attendees (
   roll_number text,
   email text,
   branch text,
+  section text,
   preference text not null check (preference in ('VEG', 'NON_VEG')),
-  source text not null default 'IMPORT' check (source in ('IMPORT', 'WALK_IN', 'MANUAL')),
+  source text not null default 'IMPORT' check (source in ('IMPORT', 'WALK_IN', 'MANUAL', 'SELF_REGISTERED')),
   checked_in_at timestamptz,
   meal_reserved_at timestamptz,
   meal_reservation_token uuid,
@@ -26,6 +27,7 @@ create unique index if not exists attendees_roll_number_unique
   where roll_number is not null and trim(roll_number) <> '';
 
 create index if not exists attendees_created_at_idx on public.attendees (created_at desc);
+create index if not exists attendees_section_idx on public.attendees (section) where section is not null and trim(section) <> '';
 create index if not exists attendees_preference_idx on public.attendees (preference);
 create index if not exists attendees_checked_in_at_idx on public.attendees (checked_in_at);
 create index if not exists attendees_meal_reserved_at_idx
