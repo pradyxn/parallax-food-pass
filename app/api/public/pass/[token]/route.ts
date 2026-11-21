@@ -11,7 +11,7 @@ export async function GET(_request: NextRequest, context: { params: Promise<{ to
       return NextResponse.json({ error: "This pass could not be found." }, { status: 404 });
     }
     const { data, error } = await getSupabaseAdmin().from("attendees")
-      .select("name, roll_number, branch, preference")
+      .select("name, roll_number, branch, section, preference")
       .eq("pass_token", token).maybeSingle();
     if (error) throw error;
     if (!data) return NextResponse.json({ error: "This pass could not be found." }, { status: 404 });
