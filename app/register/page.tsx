@@ -59,7 +59,7 @@ export default function RegisterPage() {
       <div className="public-intro">
         <div className="section-kicker"><span className="eyebrow-line" /> PARALLAX MEMBER REGISTRATION</div>
         <h1>Get your<br /><em>pass.</em></h1>
-        <p>Missed the Google Form? Register here with your college details and create your personal QR pass instantly. Already registered? Enter the same name and roll number to retrieve your existing pass.</p>
+        <p>Missed the Google Form? Complete all five fields to create a new QR pass. Already on the attendee list? Enter just your matching name and roll number; the other fields are not needed to retrieve your existing pass.</p>
         <div className="public-event-chip"><ShieldCheck size={16} /><span>ONE MEMBER · ONE PASS</span><b>21 NOV 2026</b></div>
       </div>
       <form className="public-form" onSubmit={submit}>
